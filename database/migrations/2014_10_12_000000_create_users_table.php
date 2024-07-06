@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('role',["user","superadmin"])->default("user")->comment("user, superadmin");
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamp('mobile_verified_at')->nullable();
+            $table->string('temp_token')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();

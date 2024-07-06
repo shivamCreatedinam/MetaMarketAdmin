@@ -325,6 +325,278 @@
                 }
             }
         },
+        "/forgot-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Forgot Password OTP Send",
+                "description": "Forgot Password send OTPs for email and mobile.",
+                "operationId": "forgotPassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "required": [
+                                    "mobile"
+                                ],
+                                "properties": {
+                                    "mobile": {
+                                        "description": "User's mobile number",
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP resent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mobile_otp": {
+                                            "description": "OTP sent to the user's mobile",
+                                            "type": "string",
+                                            "example": "123456"
+                                        },
+                                        "email_otp": {
+                                            "description": "OTP sent to the user's email",
+                                            "type": "string",
+                                            "example": "123456"
+                                        },
+                                        "expire_at": {
+                                            "description": "OTP expiration time",
+                                            "type": "string",
+                                            "example": "01 Jan 2024 01:23:45 PM"
+                                        },
+                                        "message": {
+                                            "description": "Notification message",
+                                            "type": "string",
+                                            "example": "We have sent OTP your registered mobile number(******7890) & email(***@example.com). OTPs expire within 5 min."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Validation error message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/verify-forgot-password-otp": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify OTP for forgot password",
+                "description": "Verify the OTP sent to the user's mobile and email for resetting the password.",
+                "operationId": "verifyForgotPasswordOTP",
+                "requestBody": {
+                    "description": "Pass mobile number, mobile OTP, and email OTP",
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "mobile": {
+                                        "description": "User's mobile number",
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "mobile_otp": {
+                                        "description": "OTP received on mobile",
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "email_otp": {
+                                        "description": "OTP received on email",
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP verified successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "OTP verified successfully. Verification completed."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error or OTP expired",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "OTP expired. Please resend OTP."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Some error occurred. Please resend OTP."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/update-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Update user password",
+                "description": "Update the user's password using a temporary token.",
+                "operationId": "updatePassword",
+                "requestBody": {
+                    "description": "Pass temporary token and new password details",
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "properties": {
+                                    "temp_token": {
+                                        "description": "Temporary token received for password reset",
+                                        "type": "string",
+                                        "example": "abcd1234"
+                                    },
+                                    "password": {
+                                        "description": "New password",
+                                        "type": "string",
+                                        "example": "newpassword"
+                                    },
+                                    "confirm_password": {
+                                        "description": "Confirmation of the new password",
+                                        "type": "string",
+                                        "example": "confirm new password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Your password successfully changed. Please login using new password."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error or invalid temporary token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Validation error message or invalid temporary token."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Some error occurred."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/login-otp-send": {
             "post": {
                 "tags": [
@@ -529,6 +801,130 @@
                                         "error": {
                                             "type": "string",
                                             "example": "Error message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login-using-email": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login using email",
+                "description": "Logs in a user using their email and password and returns a JWT token.",
+                "operationId": "loginUsingEmail",
+                "requestBody": {
+                    "description": "Pass user credentials",
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "description": "User's email",
+                                        "type": "string",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "description": "User's password",
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "bearer"
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "example": 3600
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "your_jwt_token"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "user@example.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Please check your password."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Validation error message."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error: Internal Server Error."
                                         }
                                     },
                                     "type": "object"

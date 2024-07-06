@@ -9,6 +9,7 @@ use App\Models\VerificationCodes;
 use App\Traits\ApiResponseTrait;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -253,7 +254,7 @@ class AuthController extends Controller
         DB::beginTransaction();
 
         try {
-            $user = User::where('email', $request->email)->first();
+            $user = User::where('mobile_no', $request->mobile)->first();
             $verificationCode = VerificationCodes::where('user_id', $user->uuid)->first();
 
             if ($verificationCode) {
@@ -410,10 +411,10 @@ class AuthController extends Controller
         }
     }
 
-     /**
+    /**
      * @OA\Post(
-     *     path="/forgot-password-otp",
-     *     summary="Forgot Password OTP",
+     *     path="/forgot-password",
+     *     summary="Forgot Password OTP Send",
      *     description="Forgot Password send OTPs for email and mobile.",
      *     operationId="forgotPassword",
      *     tags={"Authentication"},
@@ -446,7 +447,7 @@ class AuthController extends Controller
      *                 property="email_otp",
      *                 type="string",
      *                 description="OTP sent to the user's email",
-     *                 example="654321"
+     *                 example="123456"
      *             ),
      *             @OA\Property(
      *                 property="expire_at",
@@ -523,6 +524,229 @@ class AuthController extends Controller
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/verify-forgot-password-otp",
+     *     summary="Verify OTP for forgot password",
+     *     description="Verify the OTP sent to the user's mobile and email for resetting the password.",
+     *     operationId="verifyForgotPasswordOTP",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Pass mobile number, mobile OTP, and email OTP",
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="mobile",
+     *                     type="string",
+     *                     description="User's mobile number",
+     *                     example="1234567890"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="mobile_otp",
+     *                     type="string",
+     *                     description="OTP received on mobile",
+     *                     example="123456"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="email_otp",
+     *                     type="string",
+     *                     description="OTP received on email",
+     *                     example="123456"
+     *                 ),
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP verified successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="OTP verified successfully. Verification completed."
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error or OTP expired",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="string",
+     *                 example="OTP expired. Please resend OTP."
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="string",
+     *                 example="Some error occurred. Please resend OTP."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function verifyforgotPasswordOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required|min:10|max:10|exists:users,mobile_no',
+            'mobile_otp' => 'required|string',
+            'email_otp' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors()->first());
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user = User::where('mobile_no', $request->mobile)->first();
+            $verificationCode = VerificationCodes::where('user_id', $user->uuid)->first();
+
+            if ($verificationCode) {
+                if (now()->greaterThan($verificationCode->expire_at)) {
+                    return $this->errorResponse("OTP expired. Please resend OTP.");
+                }
+                if ($request->mobile_otp !== $verificationCode->mobile_otp) {
+                    return $this->errorResponse("Mobile OTP invalid. Please resend OTP.");
+                }
+                if ($request->email_otp !== $verificationCode->email_otp) {
+                    return $this->errorResponse("Email OTP invalid. Please resend OTP.");
+                }
+
+                $temp_token = mt_rand(1111, 9999) . Hash::make($user->email);
+                $user->update([
+                    'temp_token' => $temp_token,
+                ]);
+                $verificationCode->delete();
+
+                $data = [
+                    "temp_token" => $temp_token,
+                ];
+                DB::commit();
+                return $this->successResponse($data, "OTP verified successfully.");
+            } else {
+                DB::rollBack();
+                return $this->errorResponse("Some error occurred. Please resend OTP.");
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse("Error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/update-password",
+     *     summary="Update user password",
+     *     description="Update the user's password using a temporary token.",
+     *     operationId="updatePassword",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Pass temporary token and new password details",
+     *         @OA\MediaType(
+     *             mediaType="application/x-www-form-urlencoded",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="temp_token",
+     *                     type="string",
+     *                     description="Temporary token received for password reset",
+     *                     example="abcd1234"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="password",
+     *                     type="string",
+     *                     description="New password",
+     *                     example="newpassword"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="confirm_password",
+     *                     type="string",
+     *                     description="Confirmation of the new password",
+     *                     example="confirm new password"
+     *                 ),
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Password updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Your password successfully changed. Please login using new password."
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error or invalid temporary token",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="string",
+     *                 example="Validation error message or invalid temporary token."
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="string",
+     *                 example="Some error occurred."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function updatePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'temp_token' => 'required|exists:users,temp_token',
+            'password' => 'required|string|min:8|same:confirm_password',
+            'confirm_password' => 'required|string|min:8',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors()->first());
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user = User::where('temp_token', $request->temp_token)->first();
+
+            if ($user) {
+
+                $user->update([
+                    "password" => Hash::make($request->password),
+                    "temp_token" => null,
+                ]);
+                DB::commit();
+                return $this->successResponse([], "Your password successfully changed. Please login using new password.");
+            } else {
+                DB::rollBack();
+                return $this->errorResponse("Some error occurred.");
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse("Error: " . $e->getMessage());
         }
     }
 
@@ -777,6 +1001,149 @@ class AuthController extends Controller
             }
         } catch (Exception $e) {
             DB::rollBack();
+            return $this->errorResponse("Error: " . $e->getMessage());
+        }
+    }
+
+
+    /**
+     * @OA\Post(
+     *     path="/login-using-email",
+     *     summary="Login using email",
+     *     description="Logs in a user using their email and password and returns a JWT token.",
+     *     operationId="loginUsingEmail",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Pass user credentials",
+     *         @OA\MediaType(
+     *             mediaType="application/x-www-form-urlencoded",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="email",
+     *                     type="string",
+     *                     description="User's email",
+     *                     example="user@example.com"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="password",
+     *                     type="string",
+     *                     description="User's password",
+     *                     example="password123"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="token_type",
+     *                 type="string",
+     *                 example="bearer"
+     *             ),
+     *             @OA\Property(
+     *                 property="expires_in",
+     *                 type="integer",
+     *                 example=3600
+     *             ),
+     *             @OA\Property(
+     *                 property="access_token",
+     *                 type="string",
+     *                 example="your_jwt_token"
+     *             ),
+     *             @OA\Property(
+     *                 property="user",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="id",
+     *                     type="integer",
+     *                     example=1
+     *                 ),
+     *                 @OA\Property(
+     *                     property="name",
+     *                     type="string",
+     *                     example="John Doe"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="email",
+     *                     type="string",
+     *                     example="user@example.com"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="string",
+     *                 example="Please check your password."
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="string",
+     *                 example="Validation error message."
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="string",
+     *                 example="Error: Internal Server Error."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function loginUsingEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|min:8'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors()->first());
+        }
+
+        try {
+            $credentials = $request->only(["email", "password"]);
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
+
+                if ($user->email_verified_at == null || $user->mobile_verified_at == null) {
+                    Auth::logout();
+                    return $this->errorResponse("Please verify your mobile number and email address.");
+                }
+                // Generate JWT token for the user
+                $token = JWTAuth::fromUser($user);
+                $authenticatedUser = JWTAuth::setToken($token)->toUser();
+                $data = [
+                    'token_type' => 'bearer',
+                    'expires_in' => JWTAuth::factory()->getTTL() * 60,
+                    'access_token' => $token,
+                    'user' => $authenticatedUser
+                ];
+
+                return $this->successResponse($data, "User Logged-in successfully.");
+            } else {
+                return $this->errorResponse("Please check your password.");
+            }
+        } catch (Exception $e) {
             return $this->errorResponse("Error: " . $e->getMessage());
         }
     }
