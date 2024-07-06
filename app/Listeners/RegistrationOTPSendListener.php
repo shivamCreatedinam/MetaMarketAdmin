@@ -28,20 +28,13 @@ class RegistrationOTPSendListener
     {
         try {
             Log::channel("api_auth")->info('SendOTPEmail Listener Triggered');
-            $email_otp = generateOTP();
-            $mobile_otp = generateOTP();
-            $expiresAt = now()->addMinutes(5);
-            $verificationCode = VerificationCodes::updateOrCreate(["user_id" => $event->user->uuid], [
-                "mobile_otp" => $mobile_otp,
-                "email_otp" => $email_otp,
-                "expire_at" => $expiresAt
-            ]);
-            Log::channel("api_auth")->info('Verification Code Saved', ['verificationCode' => $verificationCode]);
+            $verificationCode = VerificationCodes::where(["user_id" => $event->user->uuid])->first();
+            Log::channel("api_auth")->info('Verification Code fetched', ['verificationCode' => $verificationCode]);
             $data = [
                 "name" => $event->user->name,
-                "mobile_otp" => $mobile_otp,
-                "email_otp" => $email_otp,
-                "expire_at" => $expiresAt->format('d M Y h:i:s A'),
+                "mobile_otp" => $verificationCode->mobile_otp,
+                "email_otp" => $verificationCode->email_otp,
+                "expire_at" => date('d M Y h:i:s A',strtotime($verificationCode->expire_at)),
             ];
 
             Mail::to($event->user->email)->send(new SendOTPMail($data));

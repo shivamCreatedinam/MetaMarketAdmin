@@ -205,6 +205,13 @@ return [
                     'in' => 'header', // The location of the API key. Valid values are "query" or "header".
                 ],
                 */
+
+                'Bearer' => [
+                    'type' => 'apiKey',
+                    'description' => 'JWT authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"',
+                    'name' => 'Authorization',
+                    'in' => 'header',
+                ],
             ],
             'security' => [
                 /*
@@ -220,6 +227,7 @@ return [
                     'passport' => []
                     */
                 ],
+                ['Bearer' => []],
             ],
         ],
 

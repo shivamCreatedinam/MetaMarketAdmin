@@ -16,10 +16,16 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::group(['prefix' => 'v1'], function () {
-    
-    Route::post("register", [AuthController::class, "register"]);
 
-    Route::group(['middleware' => 'auth:api'], function () {
+    Route::post("register", [AuthController::class, "register"]);
+    Route::post("verify-registration-otp", [AuthController::class, "verifyRegistrationOTP"]);
+    Route::post("resend-registration-otp", [AuthController::class, "resendRegistrationOTP"]);
+    Route::post("login-otp-send", [AuthController::class, "loginOTPSend"]);
+    Route::post("verify-login-otp", [AuthController::class, "verifyLoginOTP"]);
+
+    Route::group(['middleware' => ['jwt']], function () {
+        Route::get("get-authenticate-user", [AuthController::class, "getAuthenticateUser"]);
+        Route::post('logout', [AuthController::class, "logout"]);
         // Route::get('/dashboard',[HomeController::class,"dashboard"])->name("dashboard");
         // Route::get('/user-list',[UserController::class,"userList"])->name("admin_user_list");
         // Route::get("logout",[AuthController::class,"logout"])->name("admin_logout");
