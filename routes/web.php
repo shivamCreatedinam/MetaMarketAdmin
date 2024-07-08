@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::get("/", [AuthController::class, "loginView"])->name("login");
 Route::post("login", [AuthController::class, "loginPost"])->name("loginPost");
 
+Route::get("header",[HomeController::class,"printHeaders"]);
 
 Route::group(['prefix' => 'admin',  'middleware' => 'auth:web'], function () {
     //All the routes that belongs to the group goes here

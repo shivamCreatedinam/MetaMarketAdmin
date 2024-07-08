@@ -11,4 +11,10 @@ class HomeController extends Controller
     {
         return view("dashboard");
     }
+
+    public function printHeaders(Request $request)
+    {
+        $headers = $request->headers->all();
+        dd($request->ip());
+    }
 }

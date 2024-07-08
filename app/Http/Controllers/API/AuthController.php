@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Events\RegistrationOTPSendEvent;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserLoginActivity;
 use App\Models\VerificationCodes;
 use App\Traits\ApiResponseTrait;
 use Exception;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use GuzzleHttp\Client;
+
 
 class AuthController extends Controller
 {
@@ -1132,6 +1135,7 @@ class AuthController extends Controller
                 // Generate JWT token for the user
                 $token = JWTAuth::fromUser($user);
                 $authenticatedUser = JWTAuth::setToken($token)->toUser();
+                // $this->authenticatedUser($request, $user);
                 $data = [
                     'token_type' => 'bearer',
                     'expires_in' => JWTAuth::factory()->getTTL() * 60,
@@ -1267,5 +1271,36 @@ class AuthController extends Controller
     public function getAuthenticateUser()
     {
         return $this->successResponse([auth()->user()], "User Fatched");
+    }
+
+    // Login Activity
+    private function authenticatedUser(Request $request, $user)
+    {
+        // $agent = new Agent();
+        $client = new Client();
+        $response = $client->get('https://api.ipgeolocation.io/ipgeo', [
+            'query' => [
+                'apiKey' => '944ab8c4b6394e67aa7a5ac22a23780c',
+                'ip' => $request->ip(),
+            ],
+        ]);
+
+        $geoData = json_decode($response->getBody(), true);
+        dd($geoData);
+
+        UserLoginActivity::create([
+            'user_id' => $user->id,
+            'last_login_ip' => $request->ip(),
+            // 'last_login_device' => $agent->device(),
+            // 'last_login_browser' => $agent->browser(),
+            // 'last_login_os' => $agent->platform(),
+            'last_login_country' => $geoData['country_name'] ?? '',
+            'last_login_region' => $geoData['state_prov'] ?? '',
+            'last_login_city' => $geoData['city'] ?? '',
+            'last_login_timezone' => $geoData['time_zone']['name'] ?? '',
+            'last_login_latitude' => $geoData['latitude'] ?? '',
+            'last_login_longitude' => $geoData['longitude'] ?? '',
+            'last_login_at' => now(),
+        ]);
     }
 }

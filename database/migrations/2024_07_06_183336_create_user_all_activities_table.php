@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('verification_codes', function (Blueprint $table) {
+        Schema::create('user_all_activities', function (Blueprint $table) {
             $table->id();
-            $table->string("user_id");
-            $table->string("mobile_otp", 10)->nullable();
-            $table->string("email_otp", 10)->nullable();
-            $table->string("token")->nullable();
-            $table->timestamp("expire_at")->nullable()->default(null);
             $table->timestamps();
         });
     }
@@ -27,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('verification_codes');
+        Schema::dropIfExists('user_all_activities');
     }
 };

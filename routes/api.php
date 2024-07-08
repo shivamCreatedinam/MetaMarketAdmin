@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\PincodeController;
+use App\Http\Controllers\API\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,9 +33,21 @@ Route::group(['prefix' => 'v1'], function () {
 
     Route::group(['middleware' => ['jwt']], function () {
         Route::get("get-authenticate-user", [AuthController::class, "getAuthenticateUser"]);
+        Route::post("user/aadhar-kyc-save", [UserController::class, "userAadharKycSave"]);
+        Route::post("user/pan-kyc-save", [UserController::class, "userPanKycSave"]);
+
+
+
+
+
+
         Route::post('logout', [AuthController::class, "logout"]);
-        // Route::get('/dashboard',[HomeController::class,"dashboard"])->name("dashboard");
-        // Route::get('/user-list',[UserController::class,"userList"])->name("admin_user_list");
-        // Route::get("logout",[AuthController::class,"logout"])->name("admin_logout");
     });
+
+
+    // Pincodes APIs
+    Route::get("get-states", [PincodeController::class, "getStates"]);
+    Route::post("get-district", [PincodeController::class, "getDistrict"]);
+    Route::post("get-pincode", [PincodeController::class, "getPincode"]);
+    Route::get('/states-districts-pincodes', [PincodeController::class, 'getStatesDistrictsPincodes']);
 });
