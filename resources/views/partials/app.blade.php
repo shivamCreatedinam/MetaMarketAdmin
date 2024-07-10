@@ -7,6 +7,8 @@
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
     <link rel="icon" href="{{ asset('public/assets/img/kaiadmin/favicon.png') }}" type="image/x-icon" />
 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.1.1/css/bootstrap5-toggle.min.css" rel="stylesheet">
+
     <!-- Fonts and icons -->
     <script src="{{ asset('public/assets/js/plugin/webfont/webfont.min.js') }}"></script>
     <script>
@@ -95,6 +97,7 @@
     <!-- Kaiadmin DEMO methods, don't include it in your project! -->
     <script src="{{ asset('public/assets/js/setting-demo.js') }}"></script>
     <script src="{{ asset('public/assets/js/demo.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.1.1/js/bootstrap5-toggle.jquery.min.js"></script>
 
     <script>
         $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {

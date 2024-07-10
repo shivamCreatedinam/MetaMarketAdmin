@@ -4,8 +4,9 @@
         <!-- Logo Header -->
         <div class="logo-header" data-background-color="dark">
             <a href="{{ route('dashboard') }}" class="logo">
-                <img src="{{ asset('public/assets/img/kaiadmin/logo_light.svg') }}" alt="navbar brand" class="navbar-brand"
-                    height="20" />
+                {{-- <img src="{{ asset('public/assets/img/kaiadmin/logo_light.svg') }}" alt="navbar brand" class="navbar-brand"
+                    height="20" /> --}}
+                    <h3 class="text-warning font-bold text-center"><strong>Meta Market</strong></h3>
             </a>
             <div class="nav-toggle">
                 <button class="btn btn-toggle toggle-sidebar">
@@ -52,7 +53,7 @@
                                     <span class="sub-item">User List</span>
                                 </a>
                             </li>
-                           
+
                         </ul>
                     </div>
                 </li>

@@ -27,6 +27,9 @@
             <div class="card-body">
                 <h4 class="card-title">Users List</h4>
 
+                {{-- <input type="checkbox" checked data-toggle="toggle" data-width="100" data-height="75" data-onlabel="Active" data-offlabel="Block" data-onstyle="success" data-offstyle="danger"> --}}
+
+
                 <div class="table-responsive">
                     <table class="table table-striped table-bordered table-hover text-center" id="userListTable"
                         style="width: 100%">
