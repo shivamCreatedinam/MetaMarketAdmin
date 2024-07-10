@@ -49,5 +49,5 @@ Route::group(['prefix' => 'v1'], function () {
     Route::get("get-states", [PincodeController::class, "getStates"]);
     Route::post("get-district", [PincodeController::class, "getDistrict"]);
     Route::post("get-pincode", [PincodeController::class, "getPincode"]);
-    Route::get('/states-districts-pincodes', [PincodeController::class, 'getStatesDistrictsPincodes']);
+    Route::get('states-districts-pincodes', [PincodeController::class, 'getStatesDistrictsPincodes']);
 });

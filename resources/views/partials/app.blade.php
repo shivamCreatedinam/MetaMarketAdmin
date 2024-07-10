@@ -25,6 +25,9 @@
     <link rel="stylesheet" href="{{ asset('public/assets/css/style.css') }}">
     <!-- endinject -->
     <link rel="shortcut icon" href="{{ asset('public/assets/images/favicon.png') }}" />
+
+    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+
     @stack('style')
 </head>
 
@@ -66,6 +69,8 @@
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     {{-- <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap4.js"></script> --}}
     <!-- <script src="assets/js/Chart.roundedBarCharts.js"></script> -->
+
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
     <!-- End custom js for this page-->
     @stack('script')
 </body>

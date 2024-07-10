@@ -14,7 +14,7 @@ trait ApiResponseTrait
         ], $statusCode);
     }
 
-    protected function errorResponse($message = '', $errors = [], $statusCode = 400)
+    protected function errorResponse($message = '', $errors = [], $statusCode = 200)
     {
         return response()->json([
             'status' => false,
@@ -25,6 +25,6 @@ trait ApiResponseTrait
 
     protected function validationErrorResponse($errors)
     {
-        return $this->errorResponse('Validation Error', $errors, 422);
+        return $this->errorResponse('Validation Error', $errors, 200);
     }
 }
