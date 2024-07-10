@@ -19,12 +19,12 @@ use Illuminate\Support\Facades\Route;
 Route::get("/", [AuthController::class, "loginView"])->name("login");
 Route::post("login", [AuthController::class, "loginPost"])->name("loginPost");
 
-Route::get("header",[HomeController::class,"printHeaders"]);
+Route::get("header", [HomeController::class, "printHeaders"]);
 
 Route::group(['prefix' => 'admin',  'middleware' => 'auth:web'], function () {
     //All the routes that belongs to the group goes here
-    Route::get('/dashboard',[HomeController::class,"dashboard"])->name("dashboard");
-    Route::get('/user-list',[UserController::class,"userList"])->name("admin_user_list");
+    Route::get('/dashboard', [HomeController::class, "dashboard"])->name("dashboard");
+    Route::get('/user-list', [UserController::class, "userList"])->name("admin_user_list");
 
-    Route::get("logout",[AuthController::class,"logout"])->name("admin_logout");
+    Route::get("logout", [AuthController::class, "logout"])->name("admin_logout");
 });

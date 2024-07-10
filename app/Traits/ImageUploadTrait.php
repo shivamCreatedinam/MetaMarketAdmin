@@ -15,7 +15,7 @@ trait ImageUploadTrait
      * @param string|null $filename
      * @return string
      */
-    public function uploadImage(UploadedFile $image, $folder = 'images',$prefix=null, $filename = null)
+    public function uploadImage(UploadedFile $image, $folder = 'images', $prefix = null, $filename = null)
     {
         // Generate a unique filename if none is provided
         $name = $filename ?: "img_{$prefix}" . mt_rand(1111, 9999) . "_" . date('dmYHis') . '.' . $image->getClientOriginalExtension();

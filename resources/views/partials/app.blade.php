@@ -1,77 +1,129 @@
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>@yield('title') | Meta Market </title>
-    <!-- plugins:css -->
-    <link rel="stylesheet" href="{{ asset('public/assets/vendors/feather/feather.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/assets/vendors/mdi/css/materialdesignicons.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/assets/vendors/ti-icons/css/themify-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/assets/vendors/font-awesome/css/font-awesome.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/assets/vendors/typicons/typicons.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/assets/vendors/simple-line-icons/css/simple-line-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/assets/vendors/css/vendor.bundle.base.css') }}">
-    <link rel="stylesheet"
-        href="{{ asset('public/assets/vendors/bootstrap-datepicker/bootstrap-datepicker.min.css') }}">
-    <!-- endinject -->
-    <!-- Plugin css for this page -->
-    {{-- <link rel="stylesheet" href="{{ asset('public/assets/vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/assets/js/select.dataTables.min.css') }}"> --}}
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
-    <!-- End plugin css for this page -->
-    <!-- inject:css -->
-    <link rel="stylesheet" href="{{ asset('public/assets/css/style.css') }}">
-    <!-- endinject -->
-    <link rel="shortcut icon" href="{{ asset('public/assets/images/favicon.png') }}" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Meta Market - @yield('title')</title>
+    <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
+    <link rel="icon" href="{{ asset('public/assets/img/kaiadmin/favicon.png') }}" type="image/x-icon" />
 
-    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+    <!-- Fonts and icons -->
+    <script src="{{ asset('public/assets/js/plugin/webfont/webfont.min.js') }}"></script>
+    <script>
+        WebFont.load({
+            google: {
+                families: ["Public Sans:300,400,500,600,700"]
+            },
+            custom: {
+                families: [
+                    "Font Awesome 5 Solid",
+                    "Font Awesome 5 Regular",
+                    "Font Awesome 5 Brands",
+                    "simple-line-icons",
+                ],
+                urls: ["{{ asset('public/assets/css/fonts.min.css') }}"],
+            },
+            active: function() {
+                sessionStorage.fonts = true;
+            },
+        });
+    </script>
 
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="{{ asset('public/assets/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('public/assets/css/plugins.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('public/assets/css/kaiadmin.min.css') }}" />
+
+    <!-- CSS Just for demo purpose, don't include it in your project -->
+    <link rel="stylesheet" href="{{ asset('public/assets/css/demo.css') }}" />
     @stack('style')
 </head>
 
-<body class="with-welcome-text">
-    <div class="container-scroller">
-        {{-- Header --}}
-        @include('partials.header')
-        <!-- partial -->
-        <div class="container-fluid page-body-wrapper">
-            @include('partials.sidebar')
-            <div class="main-panel">
-                @yield('main-content')
-                @include('partials.footer')
-                <!-- partial -->
-            </div>
-            <!-- main-panel ends -->
-        </div>
-        <!-- page-body-wrapper ends -->
-    </div>
-    <!-- container-scroller -->
-    <!-- plugins:js -->
-    <script src="{{ asset('public/assets/vendors/js/vendor.bundle.base.js') }}"></script>
-    <script src="{{ asset('public/assets/vendors/bootstrap-datepicker/bootstrap-datepicker.min.js') }}"></script>
-    <!-- endinject -->
-    <!-- Plugin js for this page -->
-    <script src="{{ asset('public/assets/vendors/chart.js/chart.umd.js') }}"></script>
-    <script src="{{ asset('public/assets/vendors/progressbar.js/progressbar.min.js') }}"></script>
-    <!-- End plugin js for this page -->
-    <!-- inject:js -->
-    <script src="{{ asset('public/assets/js/off-canvas.js') }}"></script>
-    <script src="{{ asset('public/assets/js/template.js') }}"></script>
-    <script src="{{ asset('public/assets/js/settings.js') }}"></script>
-    <script src="{{ asset('public/assets/js/hoverable-collapse.js') }}"></script>
-    <script src="{{ asset('public/assets/js/todolist.js') }}"></script>
-    <!-- endinject -->
-    <!-- Custom js for this page-->
-    <script src="{{ asset('public/assets/js/jquery.cookie.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('public/assets/js/dashboard.js') }}"></script>
-    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
-    {{-- <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap4.js"></script> --}}
-    <!-- <script src="assets/js/Chart.roundedBarCharts.js"></script> -->
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        @include('partials.sidebar')
+        <!-- End Sidebar -->
 
-    <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
-    <!-- End custom js for this page-->
+        <div class="main-panel">
+            <!-- Header -->
+            @include('partials.header')
+            <!-- End Header -->
+
+            @yield('container')
+
+            <!-- Footer -->
+            @include('partials.footer')
+            <!-- End Footer -->
+        </div>
+
+        @include('partials.setting')
+    </div>
+    <!--   Core JS Files   -->
+    <script src="{{ asset('public/assets/js/core/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ asset('public/assets/js/core/popper.min.js') }}"></script>
+    <script src="{{ asset('public/assets/js/core/bootstrap.min.js') }}"></script>
+
+    <!-- jQuery Scrollbar -->
+    <script src="{{ asset('public/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}"></script>
+
+    <!-- Chart JS -->
+    <script src="{{ asset('public/assets/js/plugin/chart.js/chart.min.js') }}"></script>
+
+    <!-- jQuery Sparkline -->
+    <script src="{{ asset('public/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js') }}"></script>
+
+    <!-- Chart Circle -->
+    <script src="{{ asset('public/assets/js/plugin/chart-circle/circles.min.js') }}"></script>
+
+    <!-- Datatables -->
+    <script src="{{ asset('public/assets/js/plugin/datatables/datatables.min.js') }}"></script>
+
+    <!-- Bootstrap Notify -->
+    <script src="{{ asset('public/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
+
+    <!-- jQuery Vector Maps -->
+    <script src="{{ asset('public/assets/js/plugin/jsvectormap/jsvectormap.min.js') }}"></script>
+    <script src="{{ asset('public/assets/js/plugin/jsvectormap/world.js') }}"></script>
+
+    <!-- Sweet Alert -->
+    <script src="{{ asset('public/assets/js/plugin/sweetalert/sweetalert.min.js') }}"></script>
+
+    <!-- Kaiadmin JS -->
+    <script src="{{ asset('public/assets/js/kaiadmin.min.js') }}"></script>
+
+    <!-- Kaiadmin DEMO methods, don't include it in your project! -->
+    <script src="{{ asset('public/assets/js/setting-demo.js') }}"></script>
+    <script src="{{ asset('public/assets/js/demo.js') }}"></script>
+
+    <script>
+        $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
+            type: "line",
+            height: "70",
+            width: "100%",
+            lineWidth: "2",
+            lineColor: "#177dff",
+            fillColor: "rgba(23, 125, 255, 0.14)",
+        });
+
+        $("#lineChart2").sparkline([99, 125, 122, 105, 110, 124, 115], {
+            type: "line",
+            height: "70",
+            width: "100%",
+            lineWidth: "2",
+            lineColor: "#f3545d",
+            fillColor: "rgba(243, 84, 93, .14)",
+        });
+
+        $("#lineChart3").sparkline([105, 103, 123, 100, 95, 105, 115], {
+            type: "line",
+            height: "70",
+            width: "100%",
+            lineWidth: "2",
+            lineColor: "#ffa534",
+            fillColor: "rgba(255, 165, 52, .14)",
+        });
+    </script>
     @stack('script')
 </body>
 

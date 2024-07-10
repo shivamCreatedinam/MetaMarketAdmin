@@ -1,14 +1,35 @@
 @extends('partials.app')
 @section('title', 'Users List')
-@section('main-content')
-    <div class="content-wrapper">
+@section('container')
+    <div class="container">
+
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title">Dashboard</h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <a href="{{ route('dashboard') }}">
+                            <i class="icon-home"></i>
+                        </a>
+                    </li>
+                    <li class="separator">
+                        <i class="icon-arrow-right"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin_user_list') }}">Users</a>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
 
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">Users List</h4>
 
                 <div class="table-responsive">
-                    <table class="table table-striped table-bordered table-hover text-center" id="userListTable" style="width: 100%">
+                    <table class="table table-striped table-bordered table-hover text-center" id="userListTable"
+                        style="width: 100%">
                         <thead>
                             <tr>
                                 <th class="text-center">#</th>
@@ -29,6 +50,7 @@
         </div>
     </div>
 @endsection
+
 
 @push('script')
     <script>
