@@ -23,7 +23,10 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card mx-4">
+            <div class="card-header">
+                @include('status')
+            </div>
             <div class="card-body">
                 <h4 class="card-title">Users List</h4>
 

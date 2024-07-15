@@ -28,6 +28,12 @@
             </div>
         </div>
 
-        {{-- Put Your Code --}}
+        <div class="card">
+            <div class="card-header"></div> {{-- If need --}}
+            <div class="card-body">
+                {{-- Put Your Code --}}
+            </div>
+        </div>
+
     </div>
 @endsection

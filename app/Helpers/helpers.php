@@ -15,3 +15,13 @@ if (!function_exists("generateOTP")) {
         return $otp;
     }
 }
+
+if (!function_exists('getNameLetters')) {
+    function getNameLetters($name)
+    {
+        $initials = preg_replace_callback('/\b\w/u', function ($matches) {
+            return strtoupper($matches[0]);
+        }, $name);
+        return str_replace(' ', '', $initials);
+    }
+}
