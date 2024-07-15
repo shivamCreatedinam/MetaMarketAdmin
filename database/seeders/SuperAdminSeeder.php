@@ -23,6 +23,7 @@ class SuperAdminSeeder extends Seeder
             "email_verified_at" => now(),
             "mobile_verified_at" => now(),
             "password" => Hash::make("12345678"),
+            "user_status" => "active",
         ];
 
         User::create($superAdmin);

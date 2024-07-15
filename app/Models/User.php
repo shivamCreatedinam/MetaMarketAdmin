@@ -46,6 +46,7 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'mobile_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
@@ -63,8 +64,29 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->getKey();
     }
+    
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function aadharVerification()
+    {
+        return $this->hasOne(UserAadharVerification::class, 'user_id');
+    }
+
+    public function panVerification()
+    {
+        return $this->hasOne(UserPanCardVerification::class, 'user_id');
+    }
+
+    public function bankDetails()
+    {
+        return $this->hasMany(UserBankDetails::class, 'user_id');
+    }
+
+    public function defaultBankAccount()
+    {
+        return $this->bankDetails()->where('is_default', 1)->first();
     }
 }

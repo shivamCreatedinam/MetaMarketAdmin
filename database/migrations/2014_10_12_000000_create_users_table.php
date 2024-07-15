@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('google2fa_secret')->nullable();
             $table->enum('google2fa_enable', ["yes", "no"])->default("no");
             $table->timestamp('google2fa_enable_at')->nullable()->default(null);
-            $table->enum('user_status',["active","block","ban"])->nullable()->default("null");
+            $table->enum('user_status',["active","block","ban"])->nullable()->default('active');
 
             $table->rememberToken();
             $table->timestamps();
