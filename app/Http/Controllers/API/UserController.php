@@ -5,10 +5,12 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\UserAadharVerification;
 use App\Models\UserPanCardVerification;
+use App\Models\VerificationCodes;
 use App\Traits\ApiResponseTrait;
 use App\Traits\ImageUploadTrait;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -194,4 +196,165 @@ class UserController extends Controller
             return $this->errorResponse($e->getMessage());
         }
     }
+
+
+    /**
+     * @OA\Post(
+     *     path="/update-profile",
+     *     tags={"User Profile"},
+     *     summary="Update User Profile name & profile image",
+     *     description="Update the authenticated user's profile information.",
+     *     security={{"Bearer":{}}},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="profile_image", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User Profile successfully updated.",
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *     )
+     * )
+     */
+    public function updateProfile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            "name" => 'string',
+            "profile_image" => "file|mimes:png,jpg,jpeg|max:2048"
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors()->first());
+        }
+
+        try {
+            $user = Auth::user();
+            $name = $user->name;
+            if ($request->has("name") && !is_null($request->has("name"))) {
+                $name = $request->name;
+            }
+
+            $profile_image = $user->profile_image;
+            $path = "profile_image/" . $user->uuid;
+            if ($request->hasFile("profile_image")) {
+                if (!is_null($user->profile_image)) {
+                    $this->deleteImage($user->profile_image);
+                }
+                $profile_image = $this->uploadImage($request->file('profile_image'), $path);
+            }
+            $user->update([
+                "name" => $name,
+                "profile_image" => $profile_image
+            ]);
+            return $this->successResponse([], "User Profile successfully update.");
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+
+    /**
+ * @OA\Post(
+ *     path="/send-mobile-otp",
+ *     tags={"User Profile"},
+ *     summary="Send mobile OTP",
+ *     description="Send OTP to user's mobile number and store it with expiration time",
+ *     security={{"Bearer":{}}},
+ *     @OA\RequestBody(
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="OTP sent successfully",
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Bad Request",
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Internal Server Error",
+ *     )
+ * )
+ */
+    public function sendMobileOTP(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $mobile_otp = generateOTP();
+            $expiresAt = now()->addMinutes(5);
+            $verificationCode = VerificationCodes::updateOrCreate(["user_id" => $user->uuid], [
+                "mobile_otp" => $mobile_otp,
+                "expire_at" => $expiresAt
+            ]);
+
+            // event(new sendMobileOTP($user));
+
+            $data = [
+                "mobile_otp" => $verificationCode->mobile_otp,
+                "expire_at" => $expiresAt->format('d M Y h:i:s A'),
+            ];
+            return $this->successResponse($data, "We have sent OTP your mobile number. OTPs expire within 5 min.");
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+        /**
+ * @OA\Post(
+ *     path="/send-email-otp",
+ *     tags={"User Profile"},
+ *     summary="Send email OTP",
+ *     description="Send OTP to user's email and store it with expiration time",
+ *     security={{"Bearer":{}}},
+ *     @OA\RequestBody(
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="OTP sent successfully",
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Bad Request",
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Internal Server Error",
+ *     )
+ * )
+ */
+public function sendEmailOTP(Request $request)
+{
+    try {
+        $user = Auth::user();
+        $email_otp = generateOTP();
+        $expiresAt = now()->addMinutes(5);
+        $verificationCode = VerificationCodes::updateOrCreate(["user_id" => $user->uuid], [
+            "email_otp" => $email_otp,
+            "expire_at" => $expiresAt
+        ]);
+
+        // event(new sendMobileOTP($user));
+
+        $data = [
+            "email_otp" => $verificationCode->email_otp,
+            "expire_at" => $expiresAt->format('d M Y h:i:s A'),
+        ];
+        return $this->successResponse($data, "We have sent OTP your email. OTPs expire within 5 min.");
+    } catch (Exception $e) {
+        return $this->errorResponse($e->getMessage());
+    }
+}
 }

@@ -37,8 +37,10 @@ Route::group(['prefix' => 'v1'], function () {
         Route::post("user/pan-kyc-save", [UserController::class, "userPanKycSave"]);
 
 
-
-
+        // User Profile Routes
+        Route::post("update-profile",[UserController::class,"updateProfile"]);
+        Route::post("send-mobile-otp",[UserController::class,"sendMobileOTP"]);
+        Route::post("send-email-otp",[UserController::class,"sendEmailOTP"]);
 
 
         Route::post('logout', [AuthController::class, "logout"]);

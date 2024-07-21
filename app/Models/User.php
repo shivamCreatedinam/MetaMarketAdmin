@@ -64,7 +64,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->getKey();
     }
-    
+
     public function getJWTCustomClaims()
     {
         return [];
@@ -88,5 +88,14 @@ class User extends Authenticatable implements JWTSubject
     public function defaultBankAccount()
     {
         return $this->bankDetails()->where('is_default', 1)->first();
+    }
+
+    public function getProfileImageAttribute($value)
+    {
+        if ($value) {
+            return url('storage/app/public/' . $value);
+        }
+
+        return null;
     }
 }
