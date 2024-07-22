@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Events\RegistrationOTPSendEvent;
+use App\Events\EmailOTPEvent;
 use App\Listeners\RegistrationOTPSendListener;
+use App\Listeners\EmailOTPListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -22,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         RegistrationOTPSendEvent::class => [
             RegistrationOTPSendListener::class
+        ],
+        EmailOTPEvent::class => [
+            EmailOTPListener::class
         ]
     ];
 

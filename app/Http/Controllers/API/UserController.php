@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Events\EmailOTPEvent;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\UserAadharVerification;
 use App\Models\UserPanCardVerification;
 use App\Models\VerificationCodes;
 use App\Traits\ApiResponseTrait;
 use App\Traits\ImageUploadTrait;
 use Exception;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -267,94 +271,437 @@ class UserController extends Controller
 
 
     /**
- * @OA\Post(
- *     path="/send-mobile-otp",
- *     tags={"User Profile"},
- *     summary="Send mobile OTP",
- *     description="Send OTP to user's mobile number and store it with expiration time",
- *     security={{"Bearer":{}}},
- *     @OA\RequestBody(
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="OTP sent successfully",
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Bad Request",
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Internal Server Error",
- *     )
- * )
- */
+     * @OA\Post(
+     *     path="/send-mobile-otp",
+     *     tags={"User Profile"},
+     *     summary="Send mobile OTP",
+     *     description="Send OTP to user's mobile number and store it with expiration time",
+     *     security={{"Bearer":{}}},
+     *     @OA\RequestBody(
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP sent successfully",
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request",
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *     )
+     * )
+     */
     public function sendMobileOTP(Request $request)
     {
         try {
             $user = Auth::user();
             $mobile_otp = generateOTP();
             $expiresAt = now()->addMinutes(5);
+            $temp_token =  bin2hex(openssl_random_pseudo_bytes(16));
             $verificationCode = VerificationCodes::updateOrCreate(["user_id" => $user->uuid], [
                 "mobile_otp" => $mobile_otp,
-                "expire_at" => $expiresAt
+                "email_otp" => null,
+                "expire_at" => $expiresAt,
+                "token" => $temp_token
             ]);
 
             // event(new sendMobileOTP($user));
+            $mobile_no = $user->mobile_no;
+            if ($request->has('new_mobile') && !is_null($request->new_mobile)) {
+                $mobile_no = $request->new_mobile;
+            }
 
             $data = [
+                "temp_token" => $temp_token,
                 "mobile_otp" => $verificationCode->mobile_otp,
+                "mobile_no"=>$mobile_no,
                 "expire_at" => $expiresAt->format('d M Y h:i:s A'),
             ];
-            return $this->successResponse($data, "We have sent OTP your mobile number. OTPs expire within 5 min.");
+            $mobileMask = Str::mask($user->mobile_no, '*', 2, 5);
+            $message = "We have sent OTP your registered mobile number({$mobileMask}). OTPs expire within 5 min.";
+            return $this->successResponse($data, $message);
         } catch (Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
     }
 
-        /**
- * @OA\Post(
- *     path="/send-email-otp",
- *     tags={"User Profile"},
- *     summary="Send email OTP",
- *     description="Send OTP to user's email and store it with expiration time",
- *     security={{"Bearer":{}}},
- *     @OA\RequestBody(
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="OTP sent successfully",
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Bad Request",
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Internal Server Error",
- *     )
- * )
- */
-public function sendEmailOTP(Request $request)
-{
-    try {
-        $user = Auth::user();
-        $email_otp = generateOTP();
-        $expiresAt = now()->addMinutes(5);
-        $verificationCode = VerificationCodes::updateOrCreate(["user_id" => $user->uuid], [
-            "email_otp" => $email_otp,
-            "expire_at" => $expiresAt
+    /**
+     * @OA\Post(
+     *     path="/send-email-otp",
+     *     tags={"User Profile"},
+     *     summary="Send email OTP",
+     *     description="Send OTP to user's email and store it with expiration time",
+     *     security={{"Bearer":{}}},
+     *     @OA\RequestBody(
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP sent successfully",
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request",
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *     )
+     * )
+     */
+    public function sendEmailOTP(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $email_otp = generateOTP();
+            $expiresAt = now()->addMinutes(5);
+            $temp_token =  bin2hex(openssl_random_pseudo_bytes(16));
+            $verificationCode = VerificationCodes::updateOrCreate(["user_id" => $user->uuid], [
+                "email_otp" => $email_otp,
+                "mobile_otp" => null,
+                "expire_at" => $expiresAt,
+                "token" => $temp_token
+            ]);
+            $email = $user->email;
+            if ($request->has('new_email') && !is_null($request->new_email)) {
+                $email = $request->new_email;
+            }
+
+
+            event(new EmailOTPEvent($user, $email));
+
+            $data = [
+                "temp_token" => $temp_token,
+                "email" => $email,
+                "email_otp" => $verificationCode->email_otp,
+                "expire_at" => $expiresAt->format('d M Y h:i:s A'),
+            ];
+            $emailMask = Str::mask($email, '*', 2, 5);
+            $message = "We have sent OTP your registered email({$emailMask}). OTPs expire within 5 min.";
+            return $this->successResponse($data, $message);
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/verify-old-email-otp-and-send-new-mail-otp",
+     *     tags={"User Profile"},
+     *     summary="Verify email OTP and send new mail OTP",
+     *     security={{"Bearer":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="temp_token",
+     *                     type="string",
+     *                     description="Temporary token"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="otp",
+     *                     type="string",
+     *                     description="OTP to verify"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="new_email",
+     *                     type="string",
+     *                     format="email",
+     *                     description="New email address"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP verified and new email OTP sent",
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error",
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="OTP expired or invalid",
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *     )
+     * )
+     */
+    public function verifyEmailOTPAndSendNewMailOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            "temp_token" => 'required|string|exists:verification_codes,token',
+            "otp" => 'required|string',
+            "new_email" => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->ignore(auth()->user()->uuid, 'uuid')
+            ]
         ]);
 
-        // event(new sendMobileOTP($user));
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors()->first());
+        }
 
-        $data = [
-            "email_otp" => $verificationCode->email_otp,
-            "expire_at" => $expiresAt->format('d M Y h:i:s A'),
-        ];
-        return $this->successResponse($data, "We have sent OTP your email. OTPs expire within 5 min.");
-    } catch (Exception $e) {
-        return $this->errorResponse($e->getMessage());
+        try {
+            $getOTP = VerificationCodes::where("token", $request->temp_token)->first();
+            if ($getOTP) {
+                if (now()->greaterThan($getOTP->expire_at)) {
+                    return $this->errorResponse("OTP expired. Please resend OTP.");
+                }
+                if ($request->otp !== $getOTP->email_otp) {
+                    return $this->errorResponse("Email OTP invalid. Please resend OTP.");
+                }
+                $getOTP->delete();
+                return $this->sendEmailOTP($request);
+            }
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
     }
-}
+
+
+    /**
+     * @OA\Post(
+     *     path="/verify-new-email-otp-and-update-mail",
+     *     tags={"User Profile"},
+     *     summary="Verify new email OTP AND Update Mail Address",
+     *     security={{"Bearer":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/x-www-form-urlencoded",
+     *             @OA\Schema(
+     *                 required={"temp_token", "email", "otp"},
+     *                 @OA\Property(property="temp_token", type="string", example="abc123token"),
+     *                 @OA\Property(property="email", type="string", format="email", example="put new email again"),
+     *                 @OA\Property(property="otp", type="string", example="123456")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Done"),
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *     )
+     * )
+     */
+    public function verifyNewMailOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            "temp_token" => 'required|string|exists:verification_codes,token',
+            "email" => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->ignore(auth()->user()->uuid, 'uuid')
+            ],
+            "otp" => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors()->first());
+        }
+
+        try {
+            $getOTP = VerificationCodes::where("token", $request->temp_token)->first();
+            if ($getOTP) {
+                if (now()->greaterThan($getOTP->expire_at)) {
+                    return $this->errorResponse("OTP expired. Please resend OTP.");
+                }
+                if ($request->otp !== $getOTP->email_otp) {
+                    return $this->errorResponse("Email OTP invalid. Please resend OTP.");
+                }
+
+                $user = auth()->user();
+                if ($user) {
+                    $user->update([
+                        "email" => $request->email
+                    ]);
+                    $getOTP->delete();
+                    return $this->successResponse($user, "Email successfully updated. Please use new email for login.");
+                } else {
+                    return $this->errorResponse("Something went wrong.");
+                }
+
+            }
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+/**
+     * @OA\Post(
+     *     path="/verify-old-mobile-otp-and-send-new-mobile-otp",
+     *     tags={"User Profile"},
+     *     summary="Verify mobile OTP and send new mail OTP",
+     *     security={{"Bearer":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="temp_token",
+     *                     type="string",
+     *                     description="Temporary token"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="otp",
+     *                     type="string",
+     *                     description="OTP to verify"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="new_mobile",
+     *                     type="string",
+     *                     format="string",
+     *                     description="New mobile Number"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP verified and new mobile OTP sent",
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error",
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="OTP expired or invalid",
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *     )
+     * )
+     */
+    public function verifyMobileOTPAndSendNewMobileOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            "temp_token" => 'required|string|exists:verification_codes,token',
+            "otp" => 'required|string',
+            "new_mobile" => [
+                'required',
+                Rule::unique('users', 'mobile_no')->ignore(auth()->user()->uuid, 'uuid')
+            ]
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors()->first());
+        }
+
+        try {
+            $getOTP = VerificationCodes::where("token", $request->temp_token)->first();
+            if ($getOTP) {
+                if (now()->greaterThan($getOTP->expire_at)) {
+                    return $this->errorResponse("OTP expired. Please resend OTP.");
+                }
+                if ($request->otp !== $getOTP->mobile_otp) {
+                    return $this->errorResponse("Mobile OTP invalid. Please resend OTP.");
+                }
+                $getOTP->delete();
+                return $this->sendMobileOTP($request);
+            }
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+
+       /**
+     * @OA\Post(
+     *     path="/verify-new-mobile-otp-and-update-mobile",
+     *     tags={"User Profile"},
+     *     summary="Verify new mobile OTP AND Update Mobile Number",
+     *     security={{"Bearer":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/x-www-form-urlencoded",
+     *             @OA\Schema(
+     *                 required={"temp_token", "mobile", "otp"},
+     *                 @OA\Property(property="temp_token", type="string", example="abc123token"),
+     *                 @OA\Property(property="mobile", type="string", example="put new mobile number again"),
+     *                 @OA\Property(property="otp", type="string", example="123456")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Done"),
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *     )
+     * )
+     */
+    public function verifyNewMobileOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            "temp_token" => 'required|string|exists:verification_codes,token',
+            "mobile" => [
+                'required',
+                Rule::unique('users', 'mobile_no')->ignore(auth()->user()->uuid, 'uuid')
+            ],
+            "otp" => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors()->first());
+        }
+
+        try {
+            $getOTP = VerificationCodes::where("token", $request->temp_token)->first();
+            if ($getOTP) {
+                if (now()->greaterThan($getOTP->expire_at)) {
+                    return $this->errorResponse("OTP expired. Please resend OTP.");
+                }
+                if ($request->otp !== $getOTP->mobile_otp) {
+                    return $this->errorResponse("Mobile OTP invalid. Please resend OTP.");
+                }
+
+                $user = auth()->user();
+                if ($user) {
+                    $user->update([
+                        "mobile_no" => $request->mobile
+                    ]);
+                    $getOTP->delete();
+                    return $this->successResponse($user, "Mobile number successfully updated.");
+                } else {
+                    return $this->errorResponse("Something went wrong.");
+                }
+
+            }
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
 }

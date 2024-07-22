@@ -68,8 +68,8 @@
             <h1>Hello, {{ $data['name'] }}!</h1>
             <p>Thank you for registering with us. Please use the following OTP codes to verify your account:</p>
             <div class="otp">
-                <p>Mobile OTP: {{ $data['mobile_otp'] }}</p>
-                <p>Email OTP: {{ $data['email_otp'] }}</p>
+                <p>Mobile OTP: {{ $data['mobile_otp'] ?? null }}</p>
+                <p>Email OTP: {{ $data['email_otp'] ?? null }}</p>
             </div>
             <p>These codes will expire at {{ $data['expire_at'] }}.</p>
             <p>If you did not request these OTP codes, please ignore this email.</p>

@@ -41,6 +41,10 @@ Route::group(['prefix' => 'v1'], function () {
         Route::post("update-profile",[UserController::class,"updateProfile"]);
         Route::post("send-mobile-otp",[UserController::class,"sendMobileOTP"]);
         Route::post("send-email-otp",[UserController::class,"sendEmailOTP"]);
+        Route::post("verify-old-email-otp-and-send-new-mail-otp",[UserController::class,"verifyEmailOTPAndSendNewMailOTP"]);
+        Route::post("verify-old-mobile-otp-and-send-new-mobile-otp",[UserController::class,"verifyMobileOTPAndSendNewMobileOTP"]);
+        Route::post("verify-new-email-otp-and-update-mail",[UserController::class,"verifyNewMailOTP"]);
+        Route::post("verify-new-mobile-otp-and-update-mobile",[UserController::class,"verifyNewMobileOTP"]);
 
 
         Route::post('logout', [AuthController::class, "logout"]);
